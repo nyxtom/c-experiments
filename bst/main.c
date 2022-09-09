@@ -11,6 +11,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 
 int max(int a, int b) {
     return a > b ? a : b;
@@ -168,22 +169,24 @@ void t_postorder_iter(t_node* root) {
 }
 
 void t_level(t_node* root) {
-    int top = -1;
-    t_node** stack = calloc(10, sizeof(t_node*));
+    int top = 0;
+    int front = 0;
+    int size = 20;
+    t_node** q = calloc(size, sizeof(t_node*));
     t_node* current = root;
-    stack[++top] = root;
+    q[top] = root;
     
     int height = 0;
-    while (top > -1) {
-        int len = top + 1;
+    while (top >= front) {
+        int len = top + 1 - front;
         for (int i = 0; i < len; i++) {
-            current = stack[top--];
+            current = q[front++];
             printf("%d ", current->key);
-            if (current->right != NULL) {
-                stack[++top] = current->right;
-            }
             if (current->left != NULL) {
-                stack[++top] = current->left;
+                q[++top] = current->left;
+            }
+            if (current->right != NULL) {
+                q[++top] = current->right;
             }
         }
         height++;
@@ -214,11 +217,64 @@ int t_diameter(t_node* root) {
     return max(lHeight + rHeight + 1, max(lDiameter, rDiameter));
 }
 
+void t_print(t_node* root) {
+    int top = 0;
+    int front = 0;
+    int size = 20;
+    t_node** q = calloc(size, sizeof(t_node*));
+    t_node* current = root;
+    q[top] = root;
+    
+    int level = 0;
+    int total_height = t_height(root);
+    int total_width = pow(2, total_height) - 1;
+    int r = total_width;
+    int l = 0;
+    while (top >= front) {
+        int len = top + 1 - front;
+        double mid = (r + l) / (2.0 * len);
+        for (int i = 0; i < len; i++) {
+            current = q[front++];
+            int m = mid * (i + 1);
+            printf("%*d ", m, current->key);
+            if (current->left != NULL) {
+                q[++top] = current->left;
+            }
+            if (current->right != NULL) {
+                q[++top] = current->right;
+            }
+        }
+        level++;
+        printf("\n");
+    }
+}
+
+
+int t_lca(t_node* root, int a, int b) {
+    while (root != NULL) {
+        if ((a < root->key && b > root->key) || (a > root->key && b < root->key)) {
+            return root->key;
+        }
+        if (a < root->key) {
+            root = root->left;
+        } else {
+            root = root->right;
+        }
+    }
+
+    return -1;
+}
+
 int main() {
     t_node* root = t_insert(NULL, 10, "foo");
     t_insert(root, 15, "asdf");
+    t_insert(root, 6, "asdf");
     t_insert(root, 5, "asdf");
+    printf("--level:\n");
+    t_level(root);
+    printf("\n");
     t_insert(root, 12, "asdf");
+    t_insert(root, 11, "asdf");
 
     printf("--inorder:\n");
     t_inorder(root);
@@ -244,6 +300,12 @@ int main() {
 
     printf("--diameter:\n");
     printf("%d\n", t_diameter(root));
+
+    printf("--lca:\n");
+    printf("%d\n", t_lca(root, 5, 12));
+
+    printf("--print:\n");
+    t_print(root);
 
     t_free(root);
     return 0;
